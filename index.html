@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alchemist's Covenant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="jogo">
+
+    <!-- TOPO: o inimigo, centralizado, com intenção legível de longe -->
+    <header id="zona-inimigo">
+      <div class="inimigo">
+        <span class="inimigo-nome">O Paradoxo Alquímico</span>
+        <div class="inimigo-intencao" id="intencao" title="Intenção: o que o Paradoxo fará no próximo turno">
+          <span class="intencao-icone" id="intencao-icone">⚔</span>
+          <span class="intencao-valor" id="intencao-valor">2</span>
+        </div>
+        <span class="intencao-rotulo" id="intencao-rotulo">vai queimar 2 de Energia</span>
+        <div class="inimigo-vida">
+          <div class="vida-barra"><div class="vida-fill" id="vida-fill"></div></div>
+          <span class="vida-valor" id="vida-valor">40</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CENTRO: o Círculo de Transmutação — só os slots de Daemon -->
+    <main id="zona-tabuleiro">
+      <canvas id="vazio"></canvas>
+      <div id="circulo-nos">
+        <div class="slot-daemon" data-daemon="ferro">
+          <span class="slot-glifo">♂</span>
+          <span class="slot-nome">Homúnculo de Ferro</span>
+          <span class="slot-dano">⚔ <b id="dano-ferro">4</b></span>
+          <div class="slot-ciclo" title="Ciclos até a ativação">
+            <span id="ciclo-ferro">3</span>
+          </div>
+        </div>
+        <div class="slot-daemon" data-daemon="sangue">
+          <span class="slot-glifo">🜆</span>
+          <span class="slot-nome">Daemon de Sangue</span>
+          <span class="slot-dano">⚔ <b id="dano-sangue">2</b></span>
+          <div class="slot-ciclo" title="Ciclos até a ativação">
+            <span id="ciclo-sangue">2</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RODAPÉ: terço inferior — globo de Energia, mão, selar turno -->
+    <footer id="zona-mao">
+      <div id="globo-energia" title="Energia — recarrega a cada turno">
+        <span id="energia-valor">4</span>
+        <span class="globo-rotulo">Energia</span>
+      </div>
+      <div id="mao" aria-label="Sua mão de cartas"></div>
+      <button id="btn-turno" title="Encerra o turno: os ciclos avançam e o Paradoxo age">
+        Selar
+      </button>
+    </footer>
+
+  </div>
+
+  <div id="fim" hidden>
+    <div class="fim-caixa">
+      <h2 id="fim-titulo"></h2>
+      <button id="btn-denovo">Jogar de novo</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

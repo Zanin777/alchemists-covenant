@@ -1,0 +1,439 @@
+/* ═══════════════════════════════════════════════════════════════
+   Alchemist's Covenant v2 — Clean UI (StS / Balatro)
+   Três zonas empilhadas em Grid. Um número por elemento.
+   Flat + ouro: brilho só em foco, hover e ativação.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --void:       #0d0b14;
+  --painel:     #16131f;
+  --linha:      #2c2739;
+  --ouro:       #d4af37;
+  --ouro-vivo:  #f0d67c;
+  --pergaminho: #f2e9d8;
+  --tinta:      #221c14;
+  --lei:        #5b7db1;
+  --perigo:     #c05b4a;
+  --paradoxo:   #7c5f9e;
+  --texto:      #e9e4f0;
+
+  --fonte-display: 'Cinzel', serif;
+  --fonte-ui: 'Inter', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--void);
+  color: var(--texto);
+  font-family: var(--fonte-ui);
+  overflow: hidden;
+}
+
+/* ── Estrutura: 3 zonas que nunca se invadem ───────────────────── */
+
+#jogo {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr minmax(260px, 33vh);
+}
+
+/* ── TOPO: o Paradoxo ──────────────────────────────────────────── */
+
+#zona-inimigo {
+  display: flex;
+  justify-content: center;
+  padding: 1.1rem 0 0.6rem;
+}
+
+.inimigo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.inimigo-nome {
+  font-family: var(--fonte-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--paradoxo);
+}
+
+.inimigo-intencao {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1.1rem;
+  border: 2px solid var(--linha);
+  border-radius: 12px;
+  background: var(--painel);
+  transition: transform 0.25s, border-color 0.25s;
+}
+.inimigo-intencao.agindo {
+  transform: scale(1.15);
+  border-color: var(--perigo);
+}
+
+.intencao-icone { font-size: 2rem; line-height: 1; }
+.intencao-valor {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--texto);
+}
+.intencao-rotulo {
+  font-size: 0.75rem;
+  color: #9b93ab;
+}
+
+.inimigo-vida {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+}
+.vida-barra {
+  width: 230px;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--painel);
+  border: 1px solid var(--linha);
+  overflow: hidden;
+}
+.vida-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--paradoxo), #a988cf);
+  transition: width 0.45s ease;
+}
+.vida-valor {
+  font-weight: 800;
+  font-size: 1.05rem;
+  min-width: 2ch;
+  color: var(--paradoxo);
+}
+
+/* ── CENTRO: o Círculo ─────────────────────────────────────────── */
+
+#zona-tabuleiro { position: relative; min-height: 0; }
+
+#vazio {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#circulo-nos {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3rem, 12vw, 10rem);
+  z-index: 1;
+}
+
+.slot-daemon {
+  width: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.1rem 0.8rem 0.9rem;
+  border: 2px solid var(--linha);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--painel) 88%, transparent);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.slot-daemon.alvo {
+  border-color: var(--ouro);
+  box-shadow: 0 0 22px rgba(212,175,55,0.35);
+}
+.slot-daemon.ativou {
+  border-color: var(--ouro-vivo);
+  box-shadow: 0 0 34px rgba(240,214,124,0.6);
+  transform: scale(1.06);
+}
+
+.slot-glifo {
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--ouro);
+}
+.slot-nome {
+  font-family: var(--fonte-display);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #b5abc7;
+}
+.slot-dano {
+  font-size: 0.82rem;
+  color: #9b93ab;
+}
+.slot-dano b { color: var(--texto); font-size: 0.95rem; }
+
+.slot-ciclo {
+  margin-top: 0.25rem;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--ouro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+}
+.slot-ciclo span {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ouro-vivo);
+}
+.slot-ciclo.pulsa span { animation: pulso 0.4s ease; }
+@keyframes pulso { 50% { transform: scale(1.4); } }
+
+/* selo "×2" da Lei da Troca Equivalente */
+.slot-daemon .selo-dobro {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--lei);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 10px;
+}
+.slot-daemon { position: relative; }
+
+/* ── RODAPÉ: globo · mão · selar ───────────────────────────────── */
+
+#zona-mao {
+  display: grid;
+  grid-template-columns: 128px 1fr 128px;
+  align-items: center;
+  border-top: 1px solid var(--linha);
+  background: linear-gradient(180deg, transparent, rgba(22,19,31,0.85));
+  padding: 0 1rem;
+}
+
+#globo-energia {
+  justify-self: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid var(--ouro);
+  background: radial-gradient(circle at 35% 30%, #3d3452, var(--painel) 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 26px rgba(212,175,55,0.22);
+}
+#energia-valor {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ouro-vivo);
+  line-height: 1;
+}
+.globo-rotulo {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9b93ab;
+}
+
+#mao {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 100%;
+  padding-bottom: 1.1rem;
+  perspective: 900px; /* palco do tilt 3D das cartas */
+}
+
+#btn-turno {
+  justify-self: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid var(--linha);
+  background: var(--painel);
+  color: var(--texto);
+  font-family: var(--fonte-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+#btn-turno:hover:not(:disabled) {
+  border-color: var(--ouro);
+  color: var(--ouro-vivo);
+  box-shadow: 0 0 22px rgba(212,175,55,0.35);
+}
+#btn-turno:focus-visible { outline: 2px solid var(--ouro-vivo); outline-offset: 3px; }
+#btn-turno:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Cartas — física Balatro ───────────────────────────────────── */
+
+.carta {
+  --rot: 0deg;                 /* rotação de leque, definida por JS */
+  width: 152px;
+  height: 208px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--pergaminho);
+  color: var(--tinta);
+  border: 2px solid #c9b98f;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  transform: rotate(var(--rot));
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1), box-shadow 0.25s;
+  animation: flutua 4.2s ease-in-out infinite alternate;
+}
+.carta:nth-child(odd) { animation-delay: -2.1s; }
+
+@keyframes flutua {
+  from { translate: 0 0; }
+  to   { translate: 0 -5px; }
+}
+
+.carta.em-foco {
+  animation: none;
+  z-index: 10;
+  transition: transform 0.06s linear, box-shadow 0.25s;
+  box-shadow: 0 22px 40px rgba(0,0,0,0.7), 0 0 24px rgba(212,175,55,0.35);
+}
+.carta:active { cursor: grabbing; }
+.carta.arrastando { opacity: 0.4; animation: none; }
+
+.carta-custo {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--ouro);
+  color: var(--tinta);
+  border: 2px solid var(--ouro-vivo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+}
+
+.carta-nome {
+  font-family: var(--fonte-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.15;
+  margin-top: 0.45rem;
+  min-height: 2.1em;
+}
+
+.carta-glifo {
+  font-size: 3rem;
+  text-align: center;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.carta-efeito {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+  min-height: 2.8em;
+}
+
+.carta-tipo {
+  margin-top: 0.4rem;
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 3px 0;
+  border-radius: 6px;
+  background: var(--ouro);
+  color: var(--tinta);
+}
+.carta--lei .carta-tipo { background: var(--lei); color: #fff; }
+.carta--lei .carta-custo { background: var(--lei); border-color: #8fabd8; color: #fff; }
+
+/* ── Fim de jogo ───────────────────────────────────────────────── */
+
+#fim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13,11,20,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+#fim[hidden] { display: none; }
+.fim-caixa {
+  text-align: center;
+  background: var(--painel);
+  border: 2px solid var(--ouro);
+  border-radius: 16px;
+  padding: 2.2rem 3rem;
+}
+.fim-caixa h2 {
+  font-family: var(--fonte-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ouro-vivo);
+  margin-bottom: 1.2rem;
+}
+#btn-denovo {
+  font-family: var(--fonte-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--ouro);
+  color: var(--tinta);
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.6rem;
+  cursor: pointer;
+}
+#btn-denovo:hover { background: var(--ouro-vivo); }
+
+/* ── Acessibilidade / telas menores ────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+@media (max-width: 860px) {
+  .carta { width: 122px; height: 172px; }
+  .carta-glifo { font-size: 2.3rem; }
+  #mao { gap: 0; }
+  #mao .carta:not(:first-child) { margin-left: -4rem; } /* leque sobreposto, como no Balatro */
+  .carta.em-foco, .carta:hover { z-index: 10; }
+  #zona-mao { grid-template-columns: 96px 1fr 96px; }
+  #globo-energia, #btn-turno { width: 70px; height: 70px; }
+  .vida-barra { width: 160px; }
+}
