@@ -1,21 +1,32 @@
 /* ═══════════════════════════════════════════════════════════════
-   Alchemist's Covenant v2 — Clean UI (StS / Balatro)
-   Três zonas empilhadas em Grid. Um número por elemento.
-   Flat + ouro: brilho só em foco, hover e ativação.
+   Alchemist's Covenant v3 — HUD
+   Topo: arena do inimigo · Centro: Círculo dos Elementos ·
+   Rodapé: frasco de Energia, placa da Alquimista, selo de fim de turno, mão.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
   --void:       #0d0b14;
   --painel:     #16131f;
+  --painel-2:   #1f1a2b;
   --linha:      #2c2739;
   --ouro:       #d4af37;
   --ouro-vivo:  #f0d67c;
+  --ouro-escuro:#8a6a14;
   --pergaminho: #f2e9d8;
   --tinta:      #221c14;
-  --lei:        #5b7db1;
-  --perigo:     #c05b4a;
-  --paradoxo:   #7c5f9e;
+  --escudo:     #5b9bd5;
+  --escudo-vivo:#a9d0f2;
+  --perigo:     #d0503e;
+  --vida:       #5fbf68;
+  --paradoxo:   #a988cf;
   --texto:      #e9e4f0;
+  --apagado:    #9b93ab;
+
+  --carta-w: 146px;
+  --carta-h: 204px;
+  --retrato: 180px;
+  /* o círculo usa a altura que sobrar no centro (cqh = altura do #zona-tabuleiro) */
+  --circulo: max(90px, min(236px, calc(100cqh - 5.4rem)));
 
   --fonte-display: 'Cinzel', serif;
   --fonte-ui: 'Inter', system-ui, sans-serif;
@@ -24,101 +35,282 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--void);
   color: var(--texto);
   font-family: var(--fonte-ui);
   overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 18%, rgba(124,95,158,0.22), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(212,175,55,0.10), transparent 70%),
+    var(--void);
 }
 
-/* ── Estrutura: 3 zonas que nunca se invadem ───────────────────── */
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 2px solid var(--ouro-vivo); outline-offset: 3px; }
+
+/* ── Estrutura ─────────────────────────────────────────────────── */
 
 #jogo {
+  position: relative;
   height: 100vh;
+  height: 100dvh;
   display: grid;
-  grid-template-rows: auto 1fr minmax(260px, 33vh);
+  grid-template-rows: auto 1fr auto;
+}
+/* vinheta: escurece as bordas e prende o olhar no centro */
+#jogo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.75);
 }
 
-/* ── TOPO: o Paradoxo ──────────────────────────────────────────── */
+/* ── TOPO: progresso + arena ───────────────────────────────────── */
 
 #zona-inimigo {
   display: flex;
-  justify-content: center;
-  padding: 1.1rem 0 0.6rem;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.7rem 1rem 0.2rem;
+  position: relative;
+  z-index: 2;
 }
 
-.inimigo {
+.progresso {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+.progresso-pips { display: flex; gap: 6px; }
+.pip {
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border: 1.5px solid var(--ouro-escuro);
+}
+.pip--feito { background: var(--ouro-escuro); }
+.pip--atual { background: var(--ouro-vivo); border-color: var(--ouro-vivo); box-shadow: 0 0 8px var(--ouro); }
+
+.arena {
+  position: relative;
+  width: calc(var(--retrato) + 80px);
+  height: calc(var(--retrato) + 18px);
+  display: flex;
+  justify-content: center;
+}
+
+.plataforma {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: calc(var(--retrato) * 1.35);
+  translate: -50% 0;
+  overflow: visible;
+}
+.plat-halo { fill: rgba(212,175,55,0.08); }
+.plat-anel { fill: none; stroke: var(--ouro); stroke-width: 1.4; opacity: 0.55; }
+.plat-anel--fino { stroke-width: 0.8; opacity: 0.35; }
+
+.inimigo-retrato {
+  position: relative;
+  width: var(--retrato);
+  height: var(--retrato);
+}
+#inimigo-arte {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, currentColor 26%, transparent) 0%, transparent 62%);
+}
+#inimigo-arte svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  transform-origin: 50% 92%;
+  animation: respira 2.6s ease-in-out infinite alternate;
+}
+@keyframes respira { to { transform: scaleY(1.035) scaleX(0.985); } }
+
+/* animações internas das criaturas */
+.olho-brilha { animation: brilha 1.8s ease-in-out infinite alternate; }
+@keyframes brilha { from { opacity: 0.7; } to { opacity: 1; } }
+.brasa { animation: brilha 0.9s ease-in-out infinite alternate; }
+.pinga { animation: pinga 2.2s ease-in infinite; }
+.pinga--2 { animation-delay: -1.1s; }
+.pinga--3 { animation-delay: -0.5s; animation-duration: 2.8s; }
+@keyframes pinga {
+  0%   { transform: translateY(0); opacity: 1; }
+  80%  { transform: translateY(32px); opacity: 1; }
+  100% { transform: translateY(34px); opacity: 0; }
+}
+.gira { transform-origin: 100px 96px; animation: gira 18s linear infinite; }
+.gira--reverso { animation-duration: 11s; animation-direction: reverse; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.estilhacos { animation: estilhaco 3s ease-in-out infinite alternate; }
+@keyframes estilhaco { to { transform: translateY(-6px); } }
+.ondula { animation: ondula 2.4s ease-in-out infinite alternate; transform-origin: 100px 160px; }
+@keyframes ondula { to { transform: skewX(6deg) scaleY(1.06); } }
+.pisca { transform-box: fill-box; transform-origin: center; animation: pisca 5s infinite; }
+.pisca--1 { animation-delay: -1.7s; animation-duration: 4.2s; }
+.pisca--2 { animation-delay: -3.1s; animation-duration: 6s; }
+@keyframes pisca { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.08); } }
+
+/* investida no ataque e dissolução na derrota */
+.inimigo-retrato.ataca #inimigo-arte { animation: investida 0.45s ease; }
+@keyframes investida { 40% { transform: translateY(26px) scale(1.14); } }
+.inimigo-retrato.derrotado #inimigo-arte {
+  transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+  opacity: 0;
+  transform: scale(0.7) translateY(20px);
+  filter: blur(4px) brightness(2);
+}
+.inimigo-retrato.derrotado .inimigo-intencao { opacity: 0; }
+
+/* balão de intenção preso ao retrato */
+.inimigo-intencao {
+  --c: var(--perigo);
+  position: absolute;
+  top: 4px;
+  right: -40px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--c);
+  background: linear-gradient(180deg, var(--painel-2), var(--void));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 45%, transparent), 0 4px 12px rgba(0,0,0,0.6);
+  color: var(--c);
+  transition: transform 0.25s;
+  animation: paira 2.2s ease-in-out infinite alternate;
+}
+.inimigo-intencao[data-tipo="defesa"] { --c: var(--escudo-vivo); }
+.inimigo-intencao[data-tipo="fortalecer"] { --c: var(--ouro-vivo); }
+.inimigo-intencao.agindo { transform: scale(1.25); animation: none; }
+@keyframes paira { to { translate: 0 -4px; } }
+.intencao-icone { display: flex; }
+.intencao-icone svg { width: 22px; height: 22px; }
+.intencao-valor { font-size: 1.45rem; font-weight: 800; color: #fff; text-shadow: 0 0 8px var(--c); }
+
+/* ── Placas (nome + barra) ─────────────────────────────────────── */
+
+.placa {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
-.inimigo-nome {
+.inimigo-nome, .jogador-nome {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--fonte-display);
-  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--paradoxo);
 }
+.inimigo-nome { font-size: 0.95rem; color: var(--paradoxo); text-shadow: 0 0 12px rgba(169,136,207,0.5); }
+.jogador-nome { font-size: 0.68rem; color: var(--vida); }
+.inimigo-nome::before, .inimigo-nome::after {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ouro));
+}
+.inimigo-nome::after { transform: scaleX(-1); }
 
-.inimigo-intencao {
+.intencao-rotulo { font-size: 0.8rem; color: var(--apagado); text-align: center; }
+.intencao-rotulo b { color: var(--texto); }
+.intencao-rotulo em { color: var(--escudo-vivo); font-style: normal; }
+
+/* barra de vida com moldura, rastro de dano e texto dentro */
+.barra {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 1.1rem;
-  border: 2px solid var(--linha);
-  border-radius: 12px;
-  background: var(--painel);
-  transition: transform 0.25s, border-color 0.25s;
 }
-.inimigo-intencao.agindo {
-  transform: scale(1.15);
-  border-color: var(--perigo);
-}
-
-.intencao-icone { font-size: 2rem; line-height: 1; }
-.intencao-valor {
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: var(--texto);
-}
-.intencao-rotulo {
-  font-size: 0.75rem;
-  color: #9b93ab;
-}
-
-.inimigo-vida {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-top: 0.15rem;
-}
-.vida-barra {
-  width: 230px;
-  height: 12px;
-  border-radius: 6px;
-  background: var(--painel);
-  border: 1px solid var(--linha);
+.barra-trilho {
+  position: relative;
+  width: 250px;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0a0810, #1a1524);
+  border: 1.5px solid var(--ouro-escuro);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.7);
   overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
-.vida-fill {
-  height: 100%;
+.barra-rastro, .barra-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
   width: 100%;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--paradoxo), #a988cf);
-  transition: width 0.45s ease;
 }
-.vida-valor {
+.barra-rastro { background: #f6e3c0; opacity: 0.85; transition: width 0.7s ease 0.35s; }
+.barra-fill {
+  background: linear-gradient(180deg, #c3a1e6, #7c5f9e 55%, #5a3f86);
+  transition: width 0.25s ease-out;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.barra--jogador .barra-fill { background: linear-gradient(180deg, #8fe39a, #4a9a4f 55%, #2f6e35); }
+.barra--jogador.critica .barra-fill { background: linear-gradient(180deg, #ff9a85, var(--perigo) 55%, #8a2a1e); animation: critica 0.9s ease-in-out infinite alternate; }
+@keyframes critica { to { filter: brightness(1.35); } }
+.barra-texto {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
   font-weight: 800;
-  font-size: 1.05rem;
-  min-width: 2ch;
-  color: var(--paradoxo);
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+.barra.com-escudo .barra-trilho {
+  border-color: var(--escudo-vivo);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 0 12px rgba(91,155,213,0.55);
 }
 
-/* ── CENTRO: o Círculo ─────────────────────────────────────────── */
+/* escudo: brasão azul com o valor, encaixado na ponta da barra */
+.escudo {
+  position: absolute;
+  left: -20px;
+  z-index: 2;
+  width: 32px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--escudo);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+  animation: surge 0.3s ease;
+}
+.escudo[hidden] { display: none; }
+.escudo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.escudo svg path { stroke: var(--escudo-vivo); stroke-width: 1.4; }
+.escudo b { position: relative; font-size: 0.85rem; font-weight: 800; color: #fff; margin-top: -2px; }
+@keyframes surge { from { transform: scale(0.4); } }
 
-#zona-tabuleiro { position: relative; min-height: 0; }
+.treme { animation: treme 0.35s ease; }
+@keyframes treme {
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* ── CENTRO: Círculo dos Elementos ─────────────────────────────── */
+
+#zona-tabuleiro {
+  position: relative;
+  min-height: 0;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 #vazio {
   position: absolute;
@@ -128,312 +320,994 @@ body {
   display: block;
 }
 
-#circulo-nos {
+#centro {
   position: relative;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(3rem, 12vw, 10rem);
   z-index: 1;
-}
-
-.slot-daemon {
-  width: 148px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
-  padding: 1.1rem 0.8rem 0.9rem;
-  border: 2px solid var(--linha);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--painel) 88%, transparent);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-.slot-daemon.alvo {
-  border-color: var(--ouro);
-  box-shadow: 0 0 22px rgba(212,175,55,0.35);
-}
-.slot-daemon.ativou {
-  border-color: var(--ouro-vivo);
-  box-shadow: 0 0 34px rgba(240,214,124,0.6);
-  transform: scale(1.06);
 }
 
-.slot-glifo {
-  font-size: 2.6rem;
-  line-height: 1;
-  color: var(--ouro);
+#circulo { width: var(--circulo); height: var(--circulo); transform-style: preserve-3d; }
+#circulo svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* anéis, runas e pentagrama */
+.circ-anel { fill: none; stroke: var(--ouro); stroke-width: 1.2; opacity: 0.35; }
+.circ-anel--externo {
+  stroke-dasharray: 3 9;
+  stroke-width: 2.5;
+  opacity: 0.3;
+  transform-origin: 120px 120px;
+  animation: gira 60s linear infinite;
 }
-.slot-nome {
+.circ-runas { fill: none; stroke: var(--ouro); stroke-width: 7; stroke-dasharray: 1.2 5 3 5; opacity: 0.18; }
+.circ-desenho { fill: none; stroke: var(--ouro-vivo); stroke-width: 2.5; stroke-dasharray: 100; stroke-dashoffset: 100; opacity: 0; }
+.pentagrama line { stroke: var(--ouro); stroke-width: 1; opacity: 0.18; }
+.circ-miolo { fill: rgba(13,11,20,0.85); stroke: var(--ouro); stroke-width: 1.2; stroke-opacity: 0.5; }
+
+/* elos entre cartas vizinhas; Reação acende com a cor dela */
+.elo-c { stroke: var(--ouro); stroke-width: 2; opacity: 0.55; stroke-dasharray: 5 4; animation: fluxo 0.8s linear infinite; }
+.elo-c--reacao { stroke: var(--cor); stroke-width: 3.2; opacity: 1; filter: drop-shadow(0 0 4px var(--cor)); }
+@keyframes fluxo { to { stroke-dashoffset: -9; } }
+.elo-rotulo {
   font-family: var(--fonte-display);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: center;
-  color: #b5abc7;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--void);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
-.slot-dano {
-  font-size: 0.82rem;
-  color: #9b93ab;
-}
-.slot-dano b { color: var(--texto); font-size: 0.95rem; }
 
-.slot-ciclo {
-  margin-top: 0.25rem;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: 2px solid var(--ouro);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--void);
-}
-.slot-ciclo span {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--ouro-vivo);
-}
-.slot-ciclo.pulsa span { animation: pulso 0.4s ease; }
-@keyframes pulso { 50% { transform: scale(1.4); } }
+/* casas */
+.slot-borda { fill: rgba(13,11,20,0.6); stroke: var(--ouro); stroke-width: 1.2; stroke-dasharray: 3 3; opacity: 0.45; }
+.slot-num { font-family: var(--fonte-display); font-size: 12px; font-weight: 700; text-anchor: middle; fill: var(--ouro); opacity: 0.4; }
+.slot--proxima .slot-borda { opacity: 1; stroke-dasharray: none; stroke: var(--ouro-vivo); animation: proxima 1.1s ease-in-out infinite alternate; }
+.slot--proxima .slot-num { opacity: 0.9; }
+@keyframes proxima { to { filter: drop-shadow(0 0 6px var(--ouro-vivo)); } }
+.slot-fundo { fill: #14111d; }
+.slot-anel { fill: none; stroke: var(--cor); stroke-width: 3; filter: drop-shadow(0 0 5px var(--cor)); }
+.slot.aceso .slot-anel { stroke: #fff; stroke-width: 4; filter: drop-shadow(0 0 10px var(--cor)) drop-shadow(0 0 4px #fff); }
+.elo-c.aceso { stroke: #fff; opacity: 1; }
 
-/* selo "×2" da Lei da Troca Equivalente */
-.slot-daemon .selo-dobro {
+/* totais no centro: o que a transmutação vai causar */
+.centro-num { font-family: var(--fonte-display); font-size: 17px; font-weight: 900; paint-order: stroke; stroke: var(--void); stroke-width: 3px; }
+.centro-num--dano { fill: #ff8a73; }
+.centro-num--escudo { fill: var(--escudo-vivo); }
+.centro-vazio { font-family: var(--fonte-display); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; text-anchor: middle; fill: var(--apagado); opacity: 0.6; }
+
+/* ── A transmutação: o círculo deita em 3D, gira, se desenha e levanta ── */
+#centro.transmutando #circulo { animation: forma-circulo 2.3s cubic-bezier(0.45, 0, 0.25, 1) forwards; }
+@keyframes forma-circulo {
+  0%   { transform: perspective(800px) rotateX(0) rotateZ(0) scale(1); filter: none; }
+  18%  { transform: perspective(800px) rotateX(64deg) rotateZ(25deg) scale(1.12); filter: brightness(1.15); }
+  58%  { transform: perspective(800px) rotateX(64deg) rotateZ(240deg) scale(1.2); filter: brightness(1.5) drop-shadow(0 0 14px rgba(240,214,124,0.8)); }
+  74%  { transform: perspective(800px) rotateX(0deg) rotateZ(320deg) scale(1.34); filter: brightness(2.3) drop-shadow(0 0 34px #f0d67c); }
+  100% { transform: perspective(800px) rotateX(0) rotateZ(360deg) scale(1); filter: none; }
+}
+#centro.transmutando .circ-desenho { animation: desenha 1.2s ease-out 0.25s forwards; }
+@keyframes desenha { from { opacity: 1; stroke-dashoffset: 100; } to { opacity: 1; stroke-dashoffset: 0; } }
+#centro.transmutando .pentagrama line { opacity: 0.9; stroke: var(--ouro-vivo); stroke-width: 1.6; transition: opacity 0.6s 0.3s; filter: drop-shadow(0 0 3px var(--ouro)); }
+#centro.transmutando .circ-runas { opacity: 0.6; transition: opacity 0.4s; }
+#centro.transmutando .circ-anel--externo { animation-duration: 1.4s; opacity: 0.8; }
+#centro.transmutando #cat-dica { opacity: 0; }
+/* brilho no chão sob o círculo enquanto ele está deitado */
+#centro::before {
+  content: '';
   position: absolute;
-  top: -10px;
-  right: -10px;
-  background: var(--lei);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 3px 7px;
-  border-radius: 10px;
+  left: 50%;
+  top: calc(var(--circulo) / 2);
+  width: calc(var(--circulo) * 1.5);
+  height: calc(var(--circulo) * 0.55);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(240,214,124,0.55), transparent 65%);
+  opacity: 0;
+  pointer-events: none;
 }
-.slot-daemon { position: relative; }
+#centro.transmutando::before { animation: brilho-chao 2.3s ease forwards; }
+@keyframes brilho-chao { 15% { opacity: 0.4; } 60% { opacity: 0.9; } 75% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ── RODAPÉ: globo · mão · selar ───────────────────────────────── */
+/* coluna de luz do círculo até o inimigo */
+.coluna-luz {
+  position: fixed;
+  z-index: 36;
+  width: 64px;
+  border-radius: 32px;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(240,214,124,0.95), rgba(255,255,255,0.95) 45%, rgba(240,214,124,0.6) 80%, rgba(240,214,124,0));
+  box-shadow: 0 0 40px 10px rgba(240,214,124,0.6);
+  mix-blend-mode: screen;
+}
+.inimigo-retrato.fulminado #inimigo-arte svg { filter: brightness(3) saturate(0) drop-shadow(0 0 20px #fff); }
+
+#cat-dica { font-size: 0.8rem; color: var(--apagado); text-align: center; max-width: 320px; line-height: 1.4; transition: opacity 0.3s; }
+
+/* anúncio da Reação, sobre o centro do círculo */
+#anuncio {
+  position: absolute;
+  top: calc(var(--circulo) / 2);
+  left: 50%;
+  translate: -50% -50%;
+  white-space: nowrap;
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 3;
+  padding: 0.35rem 1.6rem;
+  background: radial-gradient(ellipse at center, rgba(13,11,20,0.92) 40%, transparent 72%);
+}
+#anuncio.mostra { animation: anuncio 1.6s ease forwards; }
+#anuncio.anuncio--reacao { color: var(--ouro-vivo); text-shadow: 0 0 18px rgba(240,214,124,0.8), 0 2px 4px #000, 0 0 2px #000; }
+#anuncio.anuncio--aviso { color: #ff9a85; font-size: 1rem; text-shadow: 0 2px 4px #000; }
+@keyframes anuncio {
+  0%   { opacity: 0; transform: scale(0.6); }
+  15%  { opacity: 1; transform: scale(1.12); }
+  25%  { transform: scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
+/* faixa "Seu turno" / "Turno do inimigo" */
+#banner-turno {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 4;
+  padding: 0.6rem 0;
+  text-align: center;
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ouro-vivo);
+  background: linear-gradient(90deg, transparent, rgba(13,11,20,0.92) 25%, rgba(13,11,20,0.92) 75%, transparent);
+  border-block: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--ouro), transparent) 1;
+  pointer-events: none;
+  opacity: 0;
+}
+#banner-turno.banner--inimigo { color: #ff9a85; }
+#banner-turno.mostra { animation: banner 1.2s ease forwards; }
+@keyframes banner {
+  0%   { opacity: 0; letter-spacing: 0.6em; }
+  20%  { opacity: 1; letter-spacing: 0.3em; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* números que sobem do alvo */
+.flutua {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  font-size: 2rem;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 2px #000, 0 2px 0 #000, 0 3px 8px rgba(0,0,0,0.9);
+  animation: flutua-sobe 1.1s ease-out forwards;
+}
+.flutua--dano   { color: #ff7a63; }
+.flutua--escudo { color: var(--escudo-vivo); font-size: 1.3rem; }
+.flutua--aviso  { color: var(--ouro-vivo); font-size: 1.1rem; }
+@keyframes flutua-sobe {
+  0%   { opacity: 0; translate: 0 10px; scale: 0.6; }
+  15%  { opacity: 1; translate: 0 0; scale: 1.15; }
+  30%  { scale: 1; }
+  100% { opacity: 0; translate: 0 -60px; }
+}
+
+#flash-dano {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(200,40,30,0.55));
+  opacity: 0;
+}
+#flash-dano.ativo { animation: flash 0.6s ease-out; }
+@keyframes flash { 15% { opacity: 1; } }
+
+/* ── RODAPÉ: energia · placa · selo · mão ──────────────────────── */
 
 #zona-mao {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 128px 1fr 128px;
+  grid-template-columns: 140px 1fr 140px;
+  grid-template-areas: "energia status botao" "energia mao botao";
   align-items: center;
-  border-top: 1px solid var(--linha);
-  background: linear-gradient(180deg, transparent, rgba(22,19,31,0.85));
-  padding: 0 1rem;
+  row-gap: 0.2rem;
+  padding: 0.7rem 1rem 1rem;
+  background: linear-gradient(180deg, rgba(22,19,31,0.55), rgba(13,11,20,0.97));
+}
+/* filete dourado com losango no meio, separando o rodapé */
+#zona-mao::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ouro-escuro), var(--ouro), var(--ouro-escuro), transparent);
+}
+#zona-mao::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  translate: -50% 0;
+  rotate: 45deg;
+  background: var(--ouro);
+  box-shadow: 0 0 8px var(--ouro);
 }
 
-#globo-energia {
-  justify-self: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  border: 3px solid var(--ouro);
-  background: radial-gradient(circle at 35% 30%, #3d3452, var(--painel) 70%);
+.placa--jogador { grid-area: status; gap: 0.35rem; }
+.barra--jogador .barra-trilho { width: 280px; height: 20px; }
+
+.pilhas { display: flex; gap: 0.5rem; }
+.pilha {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.66rem;
+  color: var(--apagado);
+  padding: 2px 9px 2px 6px;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: var(--painel);
+}
+.pilha b { color: var(--texto); }
+.pilha-icone {
+  position: relative;
+  width: 9px;
+  height: 12px;
+  border: 1.5px solid var(--ouro);
+  border-radius: 2px;
+  box-shadow: 2px -2px 0 -0.5px var(--painel), 2px -2px 0 0.5px var(--ouro-escuro);
+}
+.pilha-icone--descarte { border-color: var(--apagado); box-shadow: 2px -2px 0 -0.5px var(--painel), 2px -2px 0 0.5px var(--linha); }
+
+/* Energia: frasco redondo com líquido dourado que baixa ao gastar */
+#globo-energia {
+  grid-area: energia;
+  justify-self: center;
+  position: relative;
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--ouro);
+  background: radial-gradient(circle at 50% 35%, #2a2338, #0d0b14 75%);
+  box-shadow: 0 0 0 4px rgba(13,11,20,0.9), 0 0 0 5px var(--ouro-escuro), 0 0 28px rgba(212,175,55,0.3);
+  transition: box-shadow 0.3s;
+}
+.liquido {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  background: linear-gradient(180deg, #e8c25a, #b8901f 60%, #7a5c0e);
+  transition: height 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.liquido::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 0;
+  width: 200%;
+  height: 8px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 4 Q10 0 20 4 T40 4 V8 H0Z' fill='%23e8c25a'/%3E%3C/svg%3E") repeat-x;
+  background-size: 40px 8px;
+  animation: onda 1.6s linear infinite;
+}
+@keyframes onda { to { transform: translateX(-40px); } }
+.globo-vidro {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, rgba(255,255,255,0.45) 0 8%, transparent 9%),
+              radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.45));
+}
+.energia-numero {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 26px rgba(212,175,55,0.22);
+  font-family: var(--fonte-display);
+  color: #fff;
+  text-shadow: 0 0 2px #000, 0 2px 6px rgba(0,0,0,0.9);
 }
-#energia-valor {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--ouro-vivo);
-  line-height: 1;
-}
-.globo-rotulo {
-  font-size: 0.58rem;
-  letter-spacing: 0.2em;
+.energia-numero b { font-size: 2.2rem; font-weight: 900; }
+.energia-numero small { font-size: 0.9rem; font-weight: 700; opacity: 0.8; margin-top: 0.7rem; }
+#globo-energia.vazio .energia-numero b { color: #ff9a85; }
+#globo-energia.sem-energia { animation: sem-energia 0.4s ease; }
+@keyframes sem-energia { 50% { box-shadow: 0 0 0 4px rgba(13,11,20,0.9), 0 0 0 5px var(--perigo), 0 0 30px var(--perigo); transform: scale(1.06); } }
+
+/* Fim do turno: selo de cera com anel dourado */
+#btn-turno {
+  grid-area: botao;
+  justify-self: center;
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 36% 30%, #b8493c, #7a221a 55%, #4a110c);
+  box-shadow:
+    inset 0 0 0 3px rgba(240,214,124,0.65),
+    inset 0 0 0 7px rgba(0,0,0,0.25),
+    inset 0 -6px 10px rgba(0,0,0,0.4),
+    0 6px 16px rgba(0,0,0,0.7);
+  font-family: var(--fonte-display);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9b93ab;
+  line-height: 1.25;
+  color: var(--ouro-vivo);
+  text-shadow: 0 1px 2px #000;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
+}
+#btn-turno:hover:not(:disabled) { transform: scale(1.06) rotate(-4deg); filter: brightness(1.15); }
+#btn-turno:active:not(:disabled) { transform: scale(0.96); }
+#btn-turno:disabled { filter: grayscale(0.8) brightness(0.6); cursor: not-allowed; }
+#btn-turno.sugerido { animation: sugere 1.1s ease-in-out infinite alternate; }
+@keyframes sugere {
+  to { box-shadow: inset 0 0 0 3px var(--ouro-vivo), inset 0 0 0 7px rgba(0,0,0,0.25), inset 0 -6px 10px rgba(0,0,0,0.4), 0 0 30px rgba(240,214,124,0.75); }
 }
 
+/* ── Mão ───────────────────────────────────────────────────────── */
+
 #mao {
+  --n: 5;
+  grid-area: mao;
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 0.4rem;
-  height: 100%;
-  padding-bottom: 1.1rem;
-  perspective: 900px; /* palco do tilt 3D das cartas */
+  min-width: 0;
+  min-height: calc(var(--carta-h) + 1.4rem);
+  padding-top: 1.4rem;
+  perspective: 900px;
+}
+/* cartas se sobrepõem só quando não cabem lado a lado */
+#mao .carta:not(:first-child) {
+  margin-left: min(0.5rem, calc((100% - var(--n) * var(--carta-w)) / (var(--n) - 1)));
 }
 
-#btn-turno {
-  justify-self: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  border: 3px solid var(--linha);
-  background: var(--painel);
-  color: var(--texto);
-  font-family: var(--fonte-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
-}
-#btn-turno:hover:not(:disabled) {
-  border-color: var(--ouro);
-  color: var(--ouro-vivo);
-  box-shadow: 0 0 22px rgba(212,175,55,0.35);
-}
-#btn-turno:focus-visible { outline: 2px solid var(--ouro-vivo); outline-offset: 3px; }
-#btn-turno:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── Cartas — física Balatro ───────────────────────────────────── */
+/* ── Cartas ────────────────────────────────────────────────────── */
 
 .carta {
-  --rot: 0deg;                 /* rotação de leque, definida por JS */
-  width: 152px;
-  height: 208px;
+  --rot: 0deg;
+  --cor: var(--ouro);
+  width: var(--carta-w);
+  height: var(--carta-h);
   flex-shrink: 0;
   border-radius: 12px;
-  background: var(--pergaminho);
+  background: linear-gradient(170deg, #faf3e4, color-mix(in srgb, var(--cor) 14%, #e8d9bb));
   color: var(--tinta);
-  border: 2px solid #c9b98f;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
-  padding: 0.6rem 0.7rem;
+  border: 2px solid #a8946a;
+  box-shadow:
+    inset 0 0 0 3px #f6eedc,
+    inset 0 0 0 4px rgba(140,110,60,0.35),
+    0 8px 18px rgba(0,0,0,0.6);
+  padding: 0.5rem 0.5rem 0.45rem;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   position: relative;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
+  text-align: center;
   transform: rotate(var(--rot));
   transform-style: preserve-3d;
-  transition: transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1), box-shadow 0.25s;
+  transition: transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1), box-shadow 0.25s, opacity 0.2s, filter 0.2s;
   animation: flutua 4.2s ease-in-out infinite alternate;
 }
 .carta:nth-child(odd) { animation-delay: -2.1s; }
-
 @keyframes flutua {
   from { translate: 0 0; }
   to   { translate: 0 -5px; }
+}
+.carta--rara {
+  border-color: var(--ouro);
+  box-shadow:
+    inset 0 0 0 3px #f6eedc,
+    inset 0 0 0 4px var(--ouro),
+    0 8px 18px rgba(0,0,0,0.6),
+    0 0 12px rgba(212,175,55,0.35);
 }
 
 .carta.em-foco {
   animation: none;
   z-index: 10;
   transition: transform 0.06s linear, box-shadow 0.25s;
-  box-shadow: 0 22px 40px rgba(0,0,0,0.7), 0 0 24px rgba(212,175,55,0.35);
+  box-shadow: inset 0 0 0 3px #f6eedc, inset 0 0 0 4px rgba(140,110,60,0.35), 0 22px 40px rgba(0,0,0,0.7), 0 0 26px rgba(212,175,55,0.45);
 }
-.carta:active { cursor: grabbing; }
-.carta.arrastando { opacity: 0.4; animation: none; }
+.carta:focus-visible { z-index: 10; }
+
+/* esta carta causa uma Reação se jogada agora */
+.carta.reage {
+  border-color: var(--ouro-vivo);
+  box-shadow:
+    inset 0 0 0 3px #f6eedc,
+    inset 0 0 0 4px var(--ouro),
+    0 8px 18px rgba(0,0,0,0.6),
+    0 0 0 2px var(--ouro),
+    0 0 26px rgba(240,214,124,0.6);
+}
+.carta-reacao {
+  position: absolute;
+  top: -1.35rem;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font-family: var(--fonte-display);
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--ouro-vivo), var(--ouro));
+  color: var(--tinta);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 10px rgba(240,214,124,0.5);
+}
+/* sem Energia para pagar */
+.carta.cara { filter: saturate(0.4) brightness(0.7); }
+.carta.cara .carta-custo { background: radial-gradient(circle at 35% 30%, #ff9a85, var(--perigo) 60%, #7a2016); color: #fff; }
 
 .carta-custo {
   position: absolute;
-  top: -12px;
-  left: -12px;
-  width: 38px;
-  height: 38px;
+  top: -11px;
+  left: -11px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: var(--ouro);
+  background: radial-gradient(circle at 35% 30%, #fff1b8, var(--ouro) 55%, var(--ouro-escuro));
   color: var(--tinta);
-  border: 2px solid var(--ouro-vivo);
+  border: 2px solid #5a4410;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 800;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  font-family: var(--fonte-display);
+  font-size: 1.2rem;
+  font-weight: 900;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.55);
 }
 
 .carta-nome {
   font-family: var(--fonte-display);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  text-align: center;
   line-height: 1.15;
-  margin-top: 0.45rem;
-  min-height: 2.1em;
+  padding: 0.22rem 0.2rem 0.22rem 0.9rem;
+  border-radius: 5px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cor) 28%, #fff7e6), color-mix(in srgb, var(--cor) 16%, #f2e9d8));
+  border: 1px solid color-mix(in srgb, var(--cor) 45%, #a8946a);
 }
 
-.carta-glifo {
-  font-size: 3rem;
-  text-align: center;
-  line-height: 1.5;
+/* janela de arte: ilustração da carta sobre fundo escuro na cor do elemento */
+.carta-arte {
+  position: relative;
   flex: 1;
-}
-
-.carta-efeito {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.35;
-  min-height: 2.8em;
-}
-
-.carta-tipo {
-  margin-top: 0.4rem;
-  text-align: center;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  padding: 3px 0;
-  border-radius: 6px;
-  background: var(--ouro);
-  color: var(--tinta);
-}
-.carta--lei .carta-tipo { background: var(--lei); color: #fff; }
-.carta--lei .carta-custo { background: var(--lei); border-color: #8fabd8; color: #fff; }
-
-/* ── Fim de jogo ───────────────────────────────────────────────── */
-
-#fim {
-  position: fixed;
-  inset: 0;
-  background: rgba(13,11,20,0.88);
+  min-height: 0;
+  margin: 0.3rem 0;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 30;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--cor) 40%, transparent) 0%, transparent 65%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0.04) 0 10deg, transparent 10deg 20deg),
+    linear-gradient(180deg, #2a2338, #14111d);
+  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.5), inset 0 0 16px rgba(0,0,0,0.6);
+  border: 1px solid color-mix(in srgb, var(--cor) 50%, #a8946a);
 }
-#fim[hidden] { display: none; }
-.fim-caixa {
-  text-align: center;
-  background: var(--painel);
-  border: 2px solid var(--ouro);
-  border-radius: 16px;
-  padding: 2.2rem 3rem;
+.carta-ilustracao {
+  width: 92%;
+  height: 92%;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cor) 60%, transparent));
 }
-.fim-caixa h2 {
-  font-family: var(--fonte-display);
-  letter-spacing: 0.18em;
+/* glifo do elemento, pequeno no canto da arte */
+.carta-selo {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 50%;
+  background: rgba(13,11,20,0.75);
+  display: flex;
+}
+.carta-selo svg { width: 100%; height: 100%; }
+
+/* efeitos: uma linha por efeito, ícone + número grande */
+.carta-efeito {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 2.7em;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.ef { display: flex; align-items: center; gap: 4px; line-height: 1.2; }
+.ef svg { width: 15px; height: 15px; flex-shrink: 0; }
+.ef b { font-family: var(--fonte-display); font-size: 1.3em; font-weight: 900; }
+.ef--dano { color: #8a2414; }
+.ef--escudo { color: #1d4f86; }
+.ef--compra { color: #4a3a1a; }
+
+.carta-tipo {
+  margin-top: 0.3rem;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--ouro-vivo);
-  margin-bottom: 1.2rem;
+  padding: 2px 0;
+  border-radius: 6px;
+  background: var(--cor);
+  color: var(--tinta);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
 }
-#btn-denovo {
+
+/* toque: carta levantada e legível, esperando o 2º toque */
+.carta.selecionada {
+  animation: none;
+  z-index: 10;
+  transform: translateY(-34px) scale(1.18);
+  box-shadow: inset 0 0 0 3px #f6eedc, inset 0 0 0 4px var(--ouro), 0 22px 40px rgba(0,0,0,0.7), 0 0 0 2px var(--ouro-vivo);
+}
+.carta.selecionada::after {
+  content: 'toque de novo para jogar';
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--ouro-vivo);
+}
+
+/* ── Sobreposições: guia, recompensa, fim ──────────────────────── */
+
+#btn-guia {
+  position: fixed;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 20;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--ouro-escuro);
+  background: var(--painel);
   font-family: var(--fonte-display);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: var(--ouro);
-  color: var(--tinta);
-  border: none;
-  border-radius: 8px;
-  padding: 0.7rem 1.6rem;
+  font-size: 1.1rem;
+  color: var(--ouro-vivo);
   cursor: pointer;
 }
-#btn-denovo:hover { background: var(--ouro-vivo); }
+#btn-guia:hover { border-color: var(--ouro); box-shadow: 0 0 12px rgba(212,175,55,0.4); }
+
+.sobreposicao {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: radial-gradient(ellipse at center, rgba(22,19,31,0.88), rgba(13,11,20,0.96));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+.sobreposicao[hidden] { display: none; }
+
+.caixa {
+  position: relative;
+  text-align: center;
+  background: linear-gradient(180deg, var(--painel-2), var(--painel));
+  border: 1.5px solid var(--ouro);
+  border-radius: 14px;
+  box-shadow: 0 0 0 5px var(--void), 0 0 0 6px var(--ouro-escuro), 0 20px 60px rgba(0,0,0,0.8);
+  padding: 1.8rem 2rem;
+  max-width: 640px;
+  margin: auto;
+}
+.caixa h2 {
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ouro-vivo);
+  text-shadow: 0 0 16px rgba(240,214,124,0.4);
+  margin-bottom: 0.6rem;
+}
+.caixa-sub { color: var(--apagado); margin-bottom: 1.6rem; }
+
+.caixa--guia { text-align: left; max-width: 520px; }
+.caixa--guia h2 { text-align: center; }
+.guia-regras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-left: 1.1rem;
+  margin-bottom: 1.1rem;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+.guia-regras b { color: var(--ouro-vivo); }
+#guia-reacoes {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.4rem;
+  font-size: 0.85rem;
+}
+.guia-reacao { display: flex; align-items: center; gap: 0.5rem; }
+.guia-reacao b { color: var(--ouro-vivo); }
+.guia-par { display: flex; align-items: center; gap: 2px; flex-shrink: 0; color: var(--apagado); }
+.guia-par svg { width: 20px; height: 20px; }
+.caixa--guia .btn-ouro { display: block; margin: 0 auto; }
+
+#recompensa-cartas {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
+  padding-top: 0.6rem;
+}
+#recompensa-cartas .carta { animation: none; }
+#recompensa-cartas .carta:hover { transform: translateY(-10px) scale(1.04); }
+
+.btn-ouro {
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--ouro-vivo), var(--ouro) 60%, var(--ouro-escuro));
+  color: var(--tinta);
+  border: 1px solid #5a4410;
+  border-radius: 8px;
+  padding: 0.75rem 1.8rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.btn-ouro:hover { filter: brightness(1.1); box-shadow: 0 4px 20px rgba(212,175,55,0.45), inset 0 1px 0 rgba(255,255,255,0.5); }
+.btn-discreto {
+  background: none;
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+  color: var(--apagado);
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+}
+.btn-discreto:hover { color: var(--texto); border-color: var(--apagado); }
 
 /* ── Acessibilidade / telas menores ────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  #anuncio.mostra, #banner-turno.mostra { opacity: 1; }
+}
+
+/* telas baixas (notebook): encolhe arena e cartas para o centro respirar */
+@media (max-height: 800px) and (min-width: 601px) {
+  :root { --retrato: 132px; --carta-w: 122px; --carta-h: 170px; }
+  .ef svg { width: 13px; height: 13px; }
+  .carta-nome { font-size: 0.72rem; }
+  .carta-efeito { font-size: 0.68rem; }
+  #globo-energia, #btn-turno { width: 86px; height: 86px; }
+  .arena { height: calc(var(--retrato) + 10px); }
+}
+@media (max-height: 660px) and (min-width: 601px) {
+  :root { --retrato: 104px; --carta-w: 108px; --carta-h: 148px; }
+  #zona-inimigo { padding-top: 0.4rem; }
+  .inimigo-nome { font-size: 0.8rem; }
+  .jogador-nome { display: none; }
+  .carta-arte { margin: 0.2rem 0; }
+  .ef svg { width: 11px; height: 11px; }
+  .carta-efeito { font-size: 0.62rem; }
+  #globo-energia, #btn-turno { width: 74px; height: 74px; }
+  #btn-turno { font-size: 0.62rem; }
+  .energia-numero b { font-size: 1.8rem; }
 }
 
 @media (max-width: 860px) {
-  .carta { width: 122px; height: 172px; }
-  .carta-glifo { font-size: 2.3rem; }
-  #mao { gap: 0; }
-  #mao .carta:not(:first-child) { margin-left: -4rem; } /* leque sobreposto, como no Balatro */
-  .carta.em-foco, .carta:hover { z-index: 10; }
-  #zona-mao { grid-template-columns: 96px 1fr 96px; }
-  #globo-energia, #btn-turno { width: 70px; height: 70px; }
-  .vida-barra { width: 160px; }
+  :root { --carta-w: 116px; --carta-h: 164px; }
+  .ef svg { width: 13px; height: 13px; }
+  .carta-nome { font-size: 0.7rem; }
+  .carta-efeito { font-size: 0.66rem; }
+  #zona-mao { grid-template-columns: 104px 1fr 104px; }
+  #globo-energia, #btn-turno { width: 80px; height: 80px; }
+  .barra-trilho { width: 190px; }
+  .barra--jogador .barra-trilho { width: 210px; }
+}
+
+/* celular: energia, placa e selo numa linha; a mão ocupa a largura toda */
+@media (max-width: 600px) {
+  :root { --carta-w: 94px; --carta-h: 138px; --retrato: 140px; }
+  .carta { padding: 0.4rem 0.35rem 0.35rem; border-radius: 10px; }
+  .carta-custo { width: 28px; height: 28px; font-size: 0.95rem; top: -8px; left: -8px; }
+  .carta-nome { font-size: 0.6rem; padding: 0.18rem 0.1rem 0.18rem 0.6rem; }
+  .carta-arte { margin: 0.25rem 0; }
+  .ef svg { width: 11px; height: 11px; }
+  .carta-selo { width: 14px; height: 14px; padding: 1px; }
+  .carta-efeito { min-height: 2.4em; }
+  .carta-efeito { font-size: 0.58rem; }
+  .carta-tipo { font-size: 0.46rem; letter-spacing: 0.14em; }
+  .carta-reacao { font-size: 0.56rem; padding: 1px 6px; }
+  #zona-mao {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "energia status botao" "mao mao mao";
+    gap: 0.5rem 0.6rem;
+    padding: 0.8rem 0.75rem 0.8rem;
+  }
+  #globo-energia { width: 62px; height: 62px; box-shadow: 0 0 0 3px rgba(13,11,20,0.9), 0 0 0 4px var(--ouro-escuro), 0 0 18px rgba(212,175,55,0.3); }
+  .energia-numero b { font-size: 1.5rem; }
+  .energia-numero small { font-size: 0.7rem; margin-top: 0.45rem; }
+  #btn-turno { width: 62px; height: 62px; font-size: 0.5rem; }
+  .placa--jogador { align-items: stretch; min-width: 0; }
+  .jogador-nome { justify-content: center; font-size: 0.58rem; }
+  .barra--jogador { padding-left: 14px; }
+  .barra--jogador .barra-trilho { width: 100%; height: 18px; }
+  .barra--jogador .escudo { left: -6px; }
+  .pilhas { justify-content: center; gap: 0.3rem; }
+  .pilha { font-size: 0.56rem; padding: 1px 6px 1px 4px; }
+  #mao { padding-top: 2.4rem; } /* espaço para a carta levantada */
+  .arena { width: calc(var(--retrato) + 100px); }
+  .inimigo-intencao { right: -44px; top: 46px; }
+  .intencao-valor { font-size: 1.2rem; }
+  .intencao-icone svg { width: 18px; height: 18px; }
+  .inimigo-nome { font-size: 0.8rem; }
+  .inimigo-nome::before, .inimigo-nome::after { width: 18px; }
+  .barra-trilho { width: 200px; }
+  #banner-turno { font-size: 1.15rem; }
+  #anuncio { font-size: 1.15rem; }
+  #guia-reacoes { grid-template-columns: 1fr; }
+  .caixa { padding: 1.4rem 1.1rem; }
+}
+
+/* ═══ Identidade: título, história, retrato · Impacto · Maldição ═══ */
+
+/* tela de título */
+.sobreposicao--titulo {
+  z-index: 40;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(124,95,158,0.28), transparent 70%),
+    radial-gradient(ellipse at center, rgba(13,11,20,0.9), rgba(13,11,20,0.99));
+}
+.titulo-conteudo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: center;
+  margin: auto;
+}
+.titulo-selo { width: min(300px, 70vw); aspect-ratio: 1; margin-bottom: -7.5rem; opacity: 0.85; }
+.titulo-selo svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.titulo-gira { transform-origin: 150px 150px; animation: gira 40s linear infinite; }
+.titulo-gira--reverso { animation-duration: 25s; animation-direction: reverse; }
+.titulo-nome {
+  position: relative;
+  font-family: var(--fonte-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 7vw, 3.6rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ouro-vivo);
+  text-shadow: 0 0 30px rgba(240,214,124,0.45), 0 4px 0 #3a2a08, 0 6px 18px rgba(0,0,0,0.9);
+}
+.titulo-nome span {
+  display: block;
+  font-size: 0.5em;
+  letter-spacing: 0.5em;
+  margin-top: 0.4rem;
+  margin-right: -0.5em;
+  color: var(--paradoxo);
+  text-shadow: 0 0 20px rgba(169,136,207,0.6);
+}
+.titulo-frase { color: var(--apagado); font-style: italic; letter-spacing: 0.08em; margin-bottom: 0.8rem; }
+.btn-ouro--grande { font-size: 1.05rem; padding: 0.95rem 2.4rem; }
+
+/* história antes de cada luta */
+.caixa--historia { max-width: 460px; }
+.historia-capitulo {
+  display: block;
+  font-family: var(--fonte-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--apagado);
+  margin-bottom: 0.4rem;
+}
+.historia-arte {
+  width: 170px;
+  height: 170px;
+  margin: 0 auto 0.4rem;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, currentColor 30%, transparent) 0%, transparent 62%);
+}
+.historia-arte svg { width: 100%; height: 100%; display: block; overflow: visible; animation: respira 2.6s ease-in-out infinite alternate; transform-origin: 50% 92%; }
+.historia-texto {
+  font-family: var(--fonte-display);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--texto);
+  margin-bottom: 1.5rem;
+}
+#guia { z-index: 41; }
+
+/* retrato da Alquimista, encaixado à esquerda da placa */
+.placa--jogador { position: relative; padding-left: 64px; justify-self: center; }
+.retrato-jogador {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px var(--ouro), 0 0 0 4px var(--void), 0 0 0 5px var(--ouro-escuro), 0 4px 12px rgba(0,0,0,0.7);
+}
+.retrato-jogador svg { width: 100%; height: 100%; display: block; }
+.placa--jogador:has(.critica) .retrato-jogador { box-shadow: 0 0 0 2px var(--perigo), 0 0 0 4px var(--void), 0 0 14px var(--perigo); }
+
+/* botão de som, ao lado do "?" */
+#btn-som {
+  position: fixed;
+  top: 0.8rem;
+  right: 3.5rem;
+  z-index: 45;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--ouro-escuro);
+  background: var(--painel);
+  color: var(--ouro-vivo);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#btn-som svg { width: 18px; height: 18px; }
+#btn-som:hover { border-color: var(--ouro); box-shadow: 0 0 12px rgba(212,175,55,0.4); }
+#btn-guia { z-index: 45; }
+
+/* impacto */
+.carta-voando {
+  position: fixed;
+  z-index: 50;
+  margin: 0 !important;
+  pointer-events: none;
+  animation: none;
+  transform: none;
+}
+.inimigo-retrato.atingido #inimigo-arte svg { filter: brightness(2.4) saturate(0.3); }
+
+/* maldição */
+.inimigo-intencao[data-tipo="maldicao"] { --c: #c49ce8; }
+.flutua--maldicao { color: #c49ce8; font-size: 1.2rem; }
+.carta--maldicao { background: linear-gradient(170deg, #d8d0de, #a99cb4); border-color: #5a4a68; }
+.carta--maldicao .carta-nome { color: #2a1f33; }
+.ef--some { font-size: 0.85em; font-weight: 600; font-style: italic; color: #3a2c48; text-align: center; }
+
+@media (max-width: 600px) {
+  .placa--jogador { padding-left: 46px; justify-self: stretch; }
+  .retrato-jogador { width: 40px; height: 40px; }
+  .barra--jogador { padding-left: 4px; }
+  .barra--jogador .escudo { left: -14px; }
+  #btn-som { right: 3.2rem; }
+  .historia-arte { width: 140px; height: 140px; }
+  .historia-texto { font-size: 0.92rem; }
+}
+
+/* selo carregado: há cartas no círculo, o botão vira "Transmutar" */
+#btn-turno.carregado {
+  background: radial-gradient(circle at 36% 30%, #fff1b8, var(--ouro) 50%, var(--ouro-escuro));
+  color: var(--tinta);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: inset 0 0 0 3px rgba(90,68,16,0.8), inset 0 0 0 7px rgba(255,255,255,0.2), 0 0 24px rgba(240,214,124,0.55), 0 6px 16px rgba(0,0,0,0.7);
+}
+#btn-turno.carregado.sugerido { animation: carregado 0.9s ease-in-out infinite alternate; }
+@keyframes carregado { to { box-shadow: inset 0 0 0 3px rgba(90,68,16,0.8), 0 0 40px rgba(240,214,124,0.95), 0 6px 16px rgba(0,0,0,0.7); } }
+
+/* ═══ Troca Equivalente: altar no centro do círculo ═══ */
+
+.miolo-alvo { cursor: pointer; transition: stroke 0.3s, fill 0.3s; }
+.miolo-alvo:hover { stroke-opacity: 1; }
+.circ-miolo--aberto { stroke: #e0a050; stroke-width: 2; stroke-opacity: 1; stroke-dasharray: 4 3; animation: fluxo 1s linear infinite; }
+.circ-miolo--equivalente { stroke: var(--ouro-vivo); stroke-width: 2.5; stroke-opacity: 1; fill: rgba(60,45,10,0.9); filter: drop-shadow(0 0 8px var(--ouro)); }
+.circ-miolo--imperfeita { stroke: var(--perigo); stroke-width: 2.5; stroke-opacity: 1; fill: rgba(50,10,8,0.9); animation: instavel 0.5s ease-in-out infinite alternate; }
+@keyframes instavel { to { filter: drop-shadow(0 0 8px var(--perigo)); stroke-dashoffset: 3; } }
+
+.centro-mult { font-family: var(--fonte-display); font-size: 11px; font-weight: 900; text-anchor: middle; fill: var(--ouro-vivo); letter-spacing: 0.1em; paint-order: stroke; stroke: var(--void); stroke-width: 3px; }
+
+.pip-preco { stroke-width: 1.5; }
+.pip-preco--pago { fill: var(--ouro-vivo); stroke: #5a4410; filter: drop-shadow(0 0 3px var(--ouro)); }
+.pip-preco--livre { fill: none; stroke: var(--ouro); opacity: 0.55; }
+.pip-preco--falta { fill: none; stroke: var(--perigo); animation: proxima 0.6s ease-in-out infinite alternate; }
+.pip-preco--excesso { fill: #a988cf; stroke: #3a2856; opacity: 0.8; }
+
+#oferenda-painel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 1.9rem;
+}
+#oferenda-painel[hidden] { display: flex; visibility: hidden; }
+.btn-oferenda {
+  font-family: var(--fonte-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--ouro-escuro);
+  background: linear-gradient(180deg, var(--painel-2), var(--void));
+  color: var(--ouro-vivo);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.btn-oferenda:hover:not(:disabled) { border-color: var(--ouro); box-shadow: 0 0 12px rgba(212,175,55,0.35); }
+.btn-oferenda:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-oferenda[hidden] { display: none; }
+#oferenda-painel.aberto #btn-oferenda { border-color: #e0a050; background: linear-gradient(180deg, #4a2a10, #1f1208); }
+.btn-oferenda--vida { border-color: #8a2a1e; color: #ffb3a3; }
+.btn-oferenda--vida:hover { border-color: var(--perigo) !important; box-shadow: 0 0 12px rgba(208,80,62,0.45) !important; }
+.btn-oferenda--discreto { color: var(--apagado); border-color: var(--linha); }
+
+.t-ouro { color: var(--ouro-vivo); }
+.t-perigo { color: #ff9a85; }
+.t-apagado { color: var(--apagado); }
+
+/* cartas no modo Oferenda: brilho de brasa, o selo mostra o valor */
+.carta.sacrificavel { border-color: #c0602a; box-shadow: inset 0 0 0 3px #f6eedc, inset 0 0 0 4px #c0602a, 0 8px 18px rgba(0,0,0,0.6), 0 0 22px rgba(224,112,58,0.55); }
+.carta-sacrificio { background: linear-gradient(180deg, #ffb37a, #c0602a); color: #2a0e04; }
+
+/* transmutação com troca: dourada e serena, ou vermelha e rachando */
+#centro.transmutando.troca-equivalente #circulo svg { filter: sepia(0.5) saturate(1.6) brightness(1.15); }
+#centro.transmutando.troca-equivalente::before { background: radial-gradient(ellipse, rgba(255,230,140,0.85), transparent 65%); }
+#centro.transmutando.troca-imperfeita #circulo svg { filter: hue-rotate(-38deg) saturate(2) brightness(0.95); }
+#centro.transmutando.troca-imperfeita::before { background: radial-gradient(ellipse, rgba(220,50,30,0.7), transparent 65%); }
+#centro.transmutando.troca-imperfeita { animation: racha 0.12s linear infinite; }
+@keyframes racha {
+  0%   { translate: 0 0; }
+  25%  { translate: -2px 1px; }
+  50%  { translate: 2px -1px; }
+  75%  { translate: -1px -2px; }
+  100% { translate: 1px 2px; }
+}
+
+/* avisos longos (consequências da Troca) quebram linha e ficam mais tempo */
+#anuncio { white-space: normal; width: max-content; max-width: min(92vw, 560px); }
+#anuncio.anuncio--aviso.mostra { animation-duration: 3.2s; }
+@media (max-width: 600px) {
+  .btn-oferenda { font-size: 0.6rem; padding: 0.3rem 0.65rem; letter-spacing: 0.02em; }
+  #oferenda-painel { gap: 0.3rem; flex-wrap: nowrap; }
 }

@@ -6,72 +6,158 @@
   <title>Alchemist's Covenant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="jogo">
 
-    <!-- TOPO: o inimigo, centralizado, com intenção legível de longe -->
+    <!-- TOPO: progresso da run + o inimigo em sua arena -->
     <header id="zona-inimigo">
-      <div class="inimigo">
-        <span class="inimigo-nome">O Paradoxo Alquímico</span>
-        <div class="inimigo-intencao" id="intencao" title="Intenção: o que o Paradoxo fará no próximo turno">
-          <span class="intencao-icone" id="intencao-icone">⚔</span>
-          <span class="intencao-valor" id="intencao-valor">2</span>
+      <div class="progresso">
+        <span class="progresso-pips" id="progresso-pips" aria-label="Progresso da run"></span>
+        <span class="progresso-turno" id="progresso-turno">Turno 1</span>
+      </div>
+
+      <div class="arena">
+        <svg class="plataforma" viewBox="0 0 240 60" aria-hidden="true">
+          <ellipse cx="120" cy="30" rx="114" ry="24" class="plat-halo"/>
+          <ellipse cx="120" cy="30" rx="104" ry="20" class="plat-anel"/>
+          <ellipse cx="120" cy="30" rx="84" ry="15" class="plat-anel plat-anel--fino"/>
+          <path d="M36 30 L120 13 L204 30 L120 47 Z" class="plat-anel plat-anel--fino"/>
+        </svg>
+        <div class="inimigo-retrato" id="inimigo-alvo">
+          <div id="inimigo-arte"></div>
+          <div class="inimigo-intencao" id="intencao">
+            <span class="intencao-icone" id="intencao-icone"></span>
+            <span class="intencao-valor" id="intencao-valor"></span>
+          </div>
         </div>
-        <span class="intencao-rotulo" id="intencao-rotulo">vai queimar 2 de Energia</span>
-        <div class="inimigo-vida">
-          <div class="vida-barra"><div class="vida-fill" id="vida-fill"></div></div>
-          <span class="vida-valor" id="vida-valor">40</span>
+      </div>
+
+      <div class="placa placa--inimigo">
+        <span class="inimigo-nome" id="inimigo-nome"></span>
+        <div class="barra" id="barra-inimigo">
+          <span class="escudo" id="inimigo-escudo" hidden></span>
+          <div class="barra-trilho">
+            <div class="barra-rastro"></div>
+            <div class="barra-fill"></div>
+            <span class="barra-texto"></span>
+          </div>
         </div>
+        <span class="intencao-rotulo" id="intencao-rotulo"></span>
       </div>
     </header>
 
-    <!-- CENTRO: o Círculo de Transmutação — só os slots de Daemon -->
+    <!-- CENTRO: o Círculo dos Elementos -->
     <main id="zona-tabuleiro">
       <canvas id="vazio"></canvas>
-      <div id="circulo-nos">
-        <div class="slot-daemon" data-daemon="ferro">
-          <span class="slot-glifo">♂</span>
-          <span class="slot-nome">Homúnculo de Ferro</span>
-          <span class="slot-dano">⚔ <b id="dano-ferro">4</b></span>
-          <div class="slot-ciclo" title="Ciclos até a ativação">
-            <span id="ciclo-ferro">3</span>
-          </div>
+      <div id="centro">
+        <div id="circulo" aria-hidden="true"></div>
+        <span id="cat-dica"></span>
+        <div id="oferenda-painel" hidden>
+          <button class="btn-oferenda" id="btn-oferenda">⚖ Oferenda</button>
+          <button class="btn-oferenda btn-oferenda--vida" id="btn-vida" hidden></button>
+          <button class="btn-oferenda btn-oferenda--discreto" id="btn-desfazer" hidden>Desfazer</button>
         </div>
-        <div class="slot-daemon" data-daemon="sangue">
-          <span class="slot-glifo">🜆</span>
-          <span class="slot-nome">Daemon de Sangue</span>
-          <span class="slot-dano">⚔ <b id="dano-sangue">2</b></span>
-          <div class="slot-ciclo" title="Ciclos até a ativação">
-            <span id="ciclo-sangue">2</span>
-          </div>
-        </div>
+        <div id="anuncio" aria-live="polite"></div>
       </div>
+      <div id="banner-turno" aria-hidden="true"></div>
     </main>
 
-    <!-- RODAPÉ: terço inferior — globo de Energia, mão, selar turno -->
+    <!-- RODAPÉ: Energia · seu status · fim do turno, e a mão -->
     <footer id="zona-mao">
-      <div id="globo-energia" title="Energia — recarrega a cada turno">
-        <span id="energia-valor">4</span>
-        <span class="globo-rotulo">Energia</span>
+      <div id="globo-energia" title="Energia: recarrega a cada turno">
+        <div class="liquido" id="energia-liquido"></div>
+        <div class="globo-vidro"></div>
+        <span class="energia-numero"><b id="energia-valor">3</b><small id="energia-max">/3</small></span>
       </div>
-      <div id="mao" aria-label="Sua mão de cartas"></div>
-      <button id="btn-turno" title="Encerra o turno: os ciclos avançam e o Paradoxo age">
-        Selar
+
+      <div class="placa placa--jogador" id="jogador-alvo">
+        <div class="retrato-jogador" id="retrato-jogador" aria-hidden="true"></div>
+        <span class="jogador-nome">Alquimista</span>
+        <div class="barra barra--jogador" id="barra-jogador">
+          <span class="escudo" id="jogador-escudo" hidden></span>
+          <div class="barra-trilho">
+            <div class="barra-rastro"></div>
+            <div class="barra-fill"></div>
+            <span class="barra-texto"></span>
+          </div>
+        </div>
+        <div class="pilhas">
+          <span class="pilha" title="Baralho: cartas que ainda vão ser compradas"><i class="pilha-icone"></i>Baralho <b id="pilha-compra">0</b></span>
+          <span class="pilha" title="Descarte: volta embaralhado quando o baralho acaba"><i class="pilha-icone pilha-icone--descarte"></i>Descarte <b id="pilha-descarte">0</b></span>
+        </div>
+      </div>
+
+      <button id="btn-turno" title="Encerra o turno: o inimigo age">
+        <span>Fim do<br>turno</span>
       </button>
+
+      <div id="mao" aria-label="Sua mão de cartas"></div>
     </footer>
 
   </div>
 
-  <div id="fim" hidden>
-    <div class="fim-caixa">
-      <h2 id="fim-titulo"></h2>
-      <button id="btn-denovo">Jogar de novo</button>
+  <div id="flash-dano" aria-hidden="true"></div>
+  <button id="btn-som" aria-label="Som ligado" title="Som"></button>
+  <button id="btn-guia" aria-label="Como jogar">?</button>
+
+  <!-- TÍTULO: a primeira coisa que se vê; o clique também libera o áudio -->
+  <div class="sobreposicao sobreposicao--titulo" id="titulo">
+    <div class="titulo-conteudo">
+      <div class="titulo-selo" id="titulo-selo" aria-hidden="true"></div>
+      <h1 class="titulo-nome">Alchemist's<span>Covenant</span></h1>
+      <p class="titulo-frase">Toda troca tem um preço.</p>
+      <button class="btn-ouro btn-ouro--grande" id="btn-comecar">Começar jornada</button>
+      <button class="btn-discreto" id="btn-titulo-guia">Como jogar</button>
     </div>
   </div>
 
+  <!-- HISTÓRIA: um parágrafo antes de cada luta -->
+  <div class="sobreposicao" id="historia" hidden>
+    <div class="caixa caixa--historia">
+      <span class="historia-capitulo" id="historia-capitulo"></span>
+      <div class="historia-arte" id="historia-arte" aria-hidden="true"></div>
+      <h2 id="historia-nome"></h2>
+      <p class="historia-texto" id="historia-texto"></p>
+      <button class="btn-ouro" id="btn-lutar">Lutar</button>
+    </div>
+  </div>
+
+  <div class="sobreposicao" id="guia" hidden>
+    <div class="caixa caixa--guia">
+      <h2>Como jogar</h2>
+      <ul class="guia-regras">
+        <li><b>Clique numa carta</b> para colocá-la no <b>Círculo de Transmutação</b>. Ela custa a Energia do frasco dourado.</li>
+        <li>Cartas vizinhas de elementos <b>diferentes</b> (Fogo, Água, Terra) formam uma <b>Reação</b> no elo entre elas.</li>
+        <li>Aperte <b>Transmutar</b>: todo o dano e o Escudo do círculo acontecem de uma vez. Depois o inimigo faz o que anunciou.</li>
+        <li><b>Troca Equivalente:</b> no altar do centro, sacrifique cartas (somem do baralho) ou vida. Pagou o preço? O resultado <b>dobra</b>. Pagou menos? Dobra também, mas a realidade cobra o resto do jeito dela.</li>
+      </ul>
+      <div id="guia-reacoes"></div>
+      <button class="btn-ouro" id="btn-fechar-guia">Começar</button>
+    </div>
+  </div>
+
+  <div class="sobreposicao" id="recompensa" hidden>
+    <div class="caixa">
+      <h2>Vitória</h2>
+      <p class="caixa-sub" id="recompensa-sub"></p>
+      <div id="recompensa-cartas"></div>
+      <button class="btn-discreto" id="btn-pular">Pular</button>
+    </div>
+  </div>
+
+  <div class="sobreposicao" id="fim" hidden>
+    <div class="caixa">
+      <h2 id="fim-titulo"></h2>
+      <p class="caixa-sub" id="fim-sub"></p>
+      <button class="btn-ouro" id="btn-denovo">Jogar de novo</button>
+    </div>
+  </div>
+
+  <script src="arte.js"></script>
+  <script src="audio.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
